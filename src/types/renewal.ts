@@ -70,5 +70,7 @@ export interface RenewalResult {
 
 export interface SubmitLeadResponse {
   success: boolean;
+  leadId: string;
+  resultUrl: string;
   result: RenewalResult;
 }

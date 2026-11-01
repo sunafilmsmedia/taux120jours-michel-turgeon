@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { randomUUID } from "crypto";
 import { renewalInputSchema } from "@/lib/validation";
 import { processLead } from "@/lib/engine";
 import { buildCrmPayload, sendToCrm } from "@/lib/crm";
@@ -27,6 +28,7 @@ export async function POST(request: Request) {
   }
 
   const input = parsed.data;
+  const leadId = randomUUID();
 
   try {
     const { result } = await processLead(input);
@@ -39,7 +41,12 @@ export async function POST(request: Request) {
       console.error(crm.error);
     }
 
-    return NextResponse.json({ success: true, result });
+    return NextResponse.json({
+      success: true,
+      leadId,
+      resultUrl: `/results/${leadId}`,
+      result,
+    });
   } catch (e) {
     console.error("LEAD_PROCESSING_FAILED", e);
     return NextResponse.json(

@@ -1,11 +1,14 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import type { LenderKind, RateKind, RenewalInput, RenewalResult } from "@/types/renewal";
+import { useRouter } from "next/navigation";
+import type { LenderKind, RateKind, RenewalInput } from "@/types/renewal";
 import ProgressBar from "@/components/ui/ProgressBar";
+import ScoreGauge from "@/components/ui/ScoreGauge";
 import LoadingAI from "./LoadingAI";
 import { LENDER_OPTIONS, MONTH_OPTIONS, RATE_TYPE_OPTIONS, YEAR_OPTIONS, type ChoiceOption } from "./fields";
 import { echeanceDate } from "@/lib/decision";
+import { computeLivePreview } from "@/lib/livePreview";
 import { formatCurrency } from "@/lib/format";
 import { trackPixel } from "@/lib/pixel";
 
@@ -27,7 +30,8 @@ interface Answers {
   consentContact?: boolean;
 }
 
-export default function RenewalQuiz({ onComplete }: { onComplete: (result: RenewalResult, input: RenewalInput) => void }) {
+export default function RenewalQuiz() {
+  const router = useRouter();
   const [answers, setAnswers] = useState<Answers>({});
   const [stepIndex, setStepIndex] = useState(0);
   const [submitting, setSubmitting] = useState(false);
@@ -35,6 +39,9 @@ export default function RenewalQuiz({ onComplete }: { onComplete: (result: Renew
 
   const clampedIndex = Math.min(stepIndex, STEPS.length - 1);
   const currentStep = STEPS[clampedIndex];
+
+  const preview = useMemo(() => computeLivePreview(answers), [answers.maturityMonth, answers.maturityYear]);
+  const showMobilePreview = preview.hasEnoughInfo && currentStep !== "contact";
 
   function update(patch: Partial<Answers>) {
     setAnswers((prev) => ({ ...prev, ...patch }));
@@ -56,6 +63,7 @@ export default function RenewalQuiz({ onComplete }: { onComplete: (result: Renew
     setError(null);
 
     const payload = buildPayload(answers);
+    const startedAt = Date.now();
 
     try {
       const res = await fetch("/api/submit-lead", {
@@ -72,7 +80,13 @@ export default function RenewalQuiz({ onComplete }: { onComplete: (result: Renew
       }
 
       trackPixel("Lead");
-      onComplete(data.result as RenewalResult, payload);
+      const elapsed = Date.now() - startedAt;
+      const wait = Math.max(1000 - elapsed, 0);
+      sessionStorage.setItem(
+        `result:${data.leadId}`,
+        JSON.stringify({ result: data.result, input: payload })
+      );
+      setTimeout(() => router.push(data.resultUrl), wait);
     } catch {
       setError("Une erreur est survenue. Réessaie dans un instant.");
       setSubmitting(false);
@@ -82,46 +96,78 @@ export default function RenewalQuiz({ onComplete }: { onComplete: (result: Renew
   if (submitting) return <LoadingAI />;
 
   return (
-    <div className="mx-auto w-full max-w-xl">
-      <ProgressBar current={clampedIndex + 1} total={STEPS.length} />
+    <div className="mx-auto grid max-w-[1100px] gap-10 lg:grid-cols-[1fr_320px]">
+      <div>
+        {showMobilePreview && (
+          <div className="sticky top-3 z-20 mb-5 lg:hidden">
+            <div className="rounded-2xl border border-line bg-white/95 px-4 py-3 text-center shadow-card backdrop-blur">
+              <span className="caps-label text-[10px] font-semibold text-primary">Ton score en direct</span>
+              <p className="mt-0.5 text-base font-bold text-ink">
+                <span className="select-none blur-[6px]">{preview.label}</span>
+              </p>
+              <p className="mt-0.5 text-[10px] font-medium text-muted">🔒 Débloque les détails à la fin</p>
+            </div>
+          </div>
+        )}
 
-      <div key={currentStep} className="mt-8 animate-fadeUp">
-        <StepContent step={currentStep} answers={answers} update={update} advance={goNext} />
+        <ProgressBar current={clampedIndex + 1} total={STEPS.length} />
+
+        <div key={currentStep} className="mt-8 animate-fadeUp">
+          <StepContent step={currentStep} answers={answers} update={update} advance={goNext} />
+        </div>
+
+        {error && (
+          <p className="mt-4 rounded-xl border border-danger/30 bg-danger/5 px-4 py-3 text-sm text-danger">{error}</p>
+        )}
+
+        <div className="mt-8 flex items-center gap-3">
+          {clampedIndex > 0 && (
+            <button
+              onClick={goBack}
+              className="h-14 rounded-2xl border border-line px-6 text-sm font-semibold text-ink transition hover:bg-tint"
+            >
+              Retour
+            </button>
+          )}
+          {currentStep === "contact" ? (
+            <button
+              onClick={handleSubmit}
+              disabled={!canContinue}
+              className="h-14 flex-1 rounded-2xl bg-primary px-8 text-base font-bold text-white shadow-glow transition enabled:hover:bg-primary-light disabled:cursor-not-allowed disabled:opacity-40"
+            >
+              Voir mon analyse
+            </button>
+          ) : NEEDS_EXPLICIT_CONTINUE.has(currentStep) ? (
+            <button
+              onClick={goNext}
+              disabled={!canContinue}
+              className="h-14 flex-1 rounded-2xl bg-primary px-8 text-base font-bold text-white shadow-glow transition enabled:hover:bg-primary-light disabled:cursor-not-allowed disabled:opacity-40"
+            >
+              Continuer
+            </button>
+          ) : (
+            <p className="text-sm text-muted">Touche une réponse pour continuer →</p>
+          )}
+        </div>
       </div>
 
-      {error && (
-        <p className="mt-4 rounded-xl border border-danger/30 bg-danger/5 px-4 py-3 text-sm text-danger">{error}</p>
-      )}
-
-      <div className="mt-8 flex items-center gap-3">
-        {clampedIndex > 0 && (
-          <button
-            onClick={goBack}
-            className="h-14 rounded-2xl border border-line px-6 text-sm font-semibold text-ink transition hover:bg-tint"
-          >
-            Retour
-          </button>
-        )}
-        {currentStep === "contact" ? (
-          <button
-            onClick={handleSubmit}
-            disabled={!canContinue}
-            className="h-14 flex-1 rounded-2xl bg-primary px-8 text-base font-bold text-white shadow-glow transition enabled:hover:bg-primary-light disabled:cursor-not-allowed disabled:opacity-40"
-          >
-            Voir mon analyse
-          </button>
-        ) : NEEDS_EXPLICIT_CONTINUE.has(currentStep) ? (
-          <button
-            onClick={goNext}
-            disabled={!canContinue}
-            className="h-14 flex-1 rounded-2xl bg-primary px-8 text-base font-bold text-white shadow-glow transition enabled:hover:bg-primary-light disabled:cursor-not-allowed disabled:opacity-40"
-          >
-            Continuer
-          </button>
-        ) : (
-          <p className="text-sm text-muted">Touche une réponse pour continuer →</p>
-        )}
-      </div>
+      <aside className="hidden flex-col gap-4 lg:flex">
+        <div className="rounded-3xl border border-line bg-white p-6 shadow-card">
+          <div className="caps-label flex items-center gap-2 text-[11px] font-semibold text-primary">
+            <span className="inline-flex h-5 w-5 items-center justify-center rounded-full bg-primary/10">⚡</span>
+            Ton score en direct
+          </div>
+          <div className="mt-4 text-xl font-bold text-ink">
+            {preview.hasEnoughInfo ? preview.label : "À découvrir"}
+          </div>
+          <div className="mt-4">
+            <ScoreGauge score={preview.score ?? 0} active={preview.hasEnoughInfo} />
+          </div>
+          {preview.hasEnoughInfo && preview.jours !== null && (
+            <p className="mt-3 text-xs text-muted">Échéance dans {preview.jours} jours.</p>
+          )}
+        </div>
+      </aside>
     </div>
   );
 }
