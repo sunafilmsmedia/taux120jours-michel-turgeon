@@ -1,0 +1,57 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@import url("https://fonts.googleapis.com/css2?family=Cinzel:wght@500;600;700&family=Playfair+Display:wght@600;700&family=Montserrat:wght@400;500;600;700;800&display=swap");
+
+:root {
+  --primary: #0a1f44;
+  --primary-deep: #051230;
+  --accent: #c3c9d2;
+}
+
+html,
+body {
+  background: var(--primary);
+  color: #ffffff;
+  -webkit-font-smoothing: antialiased;
+}
+
+@layer components {
+  /* Dégradé argenté animé sur texte — reprend l'argent du logo MT */
+  .silver-text {
+    background: linear-gradient(180deg, #ffffff 0%, #dfe3e9 45%, #aeb6c2 100%);
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+    color: transparent;
+  }
+
+  .silver-shimmer {
+    background: linear-gradient(90deg, #8f97a4, #f5f7fa, #c6ccd5, #f5f7fa, #8f97a4);
+    background-size: 200% 100%;
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+    color: transparent;
+    @apply animate-shimmer;
+  }
+
+  .silver-line {
+    height: 1px;
+    background: linear-gradient(90deg, rgba(195, 201, 210, 0) 0%, #c3c9d2 50%, rgba(195, 201, 210, 0) 100%);
+  }
+
+  /* Mot vedette — serif, comme le nom "Michel Turgeon" sur le logo */
+  .brand-word {
+    font-family: "Playfair Display", Georgia, serif;
+    font-style: italic;
+    font-weight: 600;
+  }
+
+  /* Petites majuscules espacées — comme "COURTIER HYPOTHÉCAIRE" sur le logo */
+  .caps-label {
+    font-family: "Cinzel", Georgia, serif;
+    letter-spacing: 0.14em;
+  }
+}
