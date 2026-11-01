@@ -3,9 +3,9 @@ import Script from "next/script";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "Renouvellement hypothécaire · Michel Turgeon",
+  title: "Taux fixe ou variable : lequel choisir? · Michel Turgeon",
   description:
-    "Devrais-tu bloquer ton taux maintenant, briser ton terme, ou attendre? Analyse gratuite de ton renouvellement hypothécaire en quelques questions, par Michel Turgeon, courtier hypothécaire.",
+    "Taux fixe ou variable : lequel choisir? Découvre si tu devrais bloquer ton taux maintenant, briser ton terme, ou attendre — analyse gratuite de ton renouvellement hypothécaire en quelques questions, par Michel Turgeon, courtier hypothécaire.",
 };
 
 // Meta (Facebook) Pixel de Michel Turgeon — même pixel que

@@ -16,12 +16,12 @@ export default function LandingPage() {
         </span>
 
         <h1 className="mt-6 font-serif text-4xl font-bold leading-[1.1] text-ink sm:text-5xl">
-          Devrais-tu bloquer ton taux, <span className="italic text-primary">briser ton terme</span>, ou attendre?
+          Taux fixe ou <span className="italic text-primary">variable</span> : lequel choisir?
         </h1>
 
         <p className="mt-6 text-lg text-muted">
-          Réponds à quelques questions sur ton hypothèque actuelle et découvre ton score — analyse gratuite et
-          personnalisée par {renewalConfig.brokerName}.
+          Réponds à quelques questions sur ton hypothèque actuelle et découvre ton score — devrais-tu bloquer ton
+          taux, briser ton terme, ou attendre? Analyse gratuite et personnalisée par {renewalConfig.brokerName}.
         </p>
 
         <TrackedLink
