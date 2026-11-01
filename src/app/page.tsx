@@ -1,4 +1,5 @@
 import BrokerCard from "@/components/ui/BrokerCard";
+import HookHeadline from "@/components/ui/HookHeadline";
 import TrackedLink from "@/components/ui/TrackedLink";
 import { renewalConfig } from "@/lib/config";
 
@@ -15,9 +16,7 @@ export default function LandingPage() {
           ⏱️ 2 minutes · sans engagement
         </span>
 
-        <h1 className="mt-6 font-serif text-4xl font-bold leading-[1.1] text-ink sm:text-5xl">
-          Taux fixe ou <span className="italic text-primary">variable</span> : lequel choisir?
-        </h1>
+        <HookHeadline />
 
         <p className="mt-6 text-lg text-muted">
           Réponds à quelques questions sur ton hypothèque actuelle et découvre ton score — devrais-tu bloquer ton
