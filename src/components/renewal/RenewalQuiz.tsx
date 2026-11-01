@@ -335,18 +335,30 @@ function MaturityStep({ answers, update }: { answers: Answers; update: (patch: P
       </div>
       {jours !== null && (
         <p className="mt-4 rounded-xl bg-tint px-4 py-3 text-sm text-ink">
-          {jours >= 0 ? (
+          {jours < 0 ? (
+            <>Cette date est déjà passée — ton terme est probablement déjà échu ou renouvelé automatiquement, on y verra avec Michel.</>
+          ) : jours > TROP_LOIN_JOURS ? (
+            <>
+              Ton échéance arrive dans <strong>{jours} jours</strong> — c&apos;est encore trop loin pour qu&apos;on puisse te
+              conseiller avec précision dès maintenant (les taux et les pénalités peuvent beaucoup changer d&apos;ici là). On
+              va simplement garder ton dossier ouvert et Michel te recontactera au bon moment.
+            </>
+          ) : (
             <>
               Ton échéance arrive dans <strong>{jours} jours</strong>.
             </>
-          ) : (
-            <>Cette date est déjà passée — ton terme est probablement déjà échu ou renouvelé automatiquement, on y verra avec Michel.</>
           )}
         </p>
       )}
     </div>
   );
 }
+
+// Au-delà d'un an, un conseil précis (pénalité, comparaison au marché)
+// n'a plus vraiment de sens — les taux affichés aujourd'hui ne reflètent
+// rien d'utile pour une échéance aussi loin. Aligné sur le seuil
+// A_SURVEILLER du moteur de décision (voir lib/decision.ts).
+const TROP_LOIN_JOURS = 365;
 
 function CurrentRateStep({
   answers,
