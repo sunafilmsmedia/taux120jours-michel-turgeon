@@ -18,8 +18,6 @@ export const LENDER_OPTIONS: ChoiceOption<LenderKind>[] = [
   { label: "Je ne sais pas", icon: "🤷", value: "ne_sais_pas" },
 ];
 
-const currentYear = new Date().getFullYear();
-
 export const MONTH_OPTIONS = [
   "Janvier",
   "Février",
@@ -35,4 +33,4 @@ export const MONTH_OPTIONS = [
   "Décembre",
 ].map((label, i) => ({ label, value: i + 1 }));
 
-export const YEAR_OPTIONS = Array.from({ length: 8 }, (_, i) => currentYear - 1 + i);
+export const YEAR_OPTIONS = [2026, 2027, 2028, 2029];
