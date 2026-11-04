@@ -15,6 +15,9 @@ export interface CrmPayload {
   // directement dans le webhook GHL.
   periode: "jour" | "nuit";
   lead_type: "lead_jour" | "lead_nuit";
+  // Segmentation semaine / fin de semaine (même logique, pour adapter le
+  // message GHL selon le jour d'entrée du lead).
+  type_semaine: "semaine" | "fin_de_semaine";
   tags: string[];
   customFields: Record<string, string | number>;
 }
@@ -36,13 +39,27 @@ export function getLeadPeriod(): { periode: "jour" | "nuit"; lead_type: "lead_jo
     : { periode: "nuit", lead_type: "lead_nuit" };
 }
 
+/**
+ * Segmentation semaine / fin de semaine selon le jour au Québec
+ * (America/Toronto). Semaine = lundi au samedi, Fin de semaine = dimanche.
+ */
+export function getLeadWeekPart(): { type_semaine: "semaine" | "fin_de_semaine" } {
+  const weekday = new Intl.DateTimeFormat("en-CA", {
+    timeZone: "America/Toronto",
+    weekday: "short",
+  }).format(new Date());
+  return { type_semaine: weekday === "Sun" ? "fin_de_semaine" : "semaine" };
+}
+
 export function buildCrmPayload(input: RenewalInput, decision: DecisionResult): CrmPayload {
   const { periode, lead_type } = getLeadPeriod();
+  const { type_semaine } = getLeadWeekPart();
 
   const tags = [
     "Lead - Outil renouvellement",
     `Verdict - ${VERDICT_LABELS[decision.verdict]}`,
     lead_type, // "lead_jour" ou "lead_nuit" — pour router le lead dans GHL
+    `lead_${type_semaine}`, // "lead_semaine" ou "lead_fin_de_semaine"
   ];
   if (decision.consolidation) tags.push("Consolidation de dettes");
 
@@ -53,6 +70,7 @@ export function buildCrmPayload(input: RenewalInput, decision: DecisionResult): 
     phone: input.phone,
     periode,
     lead_type,
+    type_semaine,
     tags,
     customFields: {
       maturityDate: `${input.maturityMonth}/${input.maturityYear}`,
@@ -69,6 +87,7 @@ export function buildCrmPayload(input: RenewalInput, decision: DecisionResult): 
       dateRelance: decision.relance,
       periode,
       lead_type,
+      type_semaine,
     },
   };
 }
