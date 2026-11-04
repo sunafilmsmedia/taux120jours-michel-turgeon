@@ -7,7 +7,7 @@ import ProgressBar from "@/components/ui/ProgressBar";
 import ScoreGauge from "@/components/ui/ScoreGauge";
 import LoadingAI from "./LoadingAI";
 import { LENDER_OPTIONS, MONTH_OPTIONS, RATE_TYPE_OPTIONS, YEAR_OPTIONS, type ChoiceOption } from "./fields";
-import { echeanceDate } from "@/lib/decision";
+import { echeanceDate, FENETRE_MAX_AVANCE_JOURS } from "@/lib/decision";
 import { computeLivePreview } from "@/lib/livePreview";
 import { formatCurrency } from "@/lib/format";
 import { trackPixel } from "@/lib/pixel";
@@ -178,8 +178,15 @@ const NEEDS_EXPLICIT_CONTINUE = new Set<StepKey>(["maturity", "currentRate", "ba
 
 function validateStep(step: StepKey, a: Answers): boolean {
   switch (step) {
-    case "maturity":
-      return !!a.maturityMonth && !!a.maturityYear;
+    case "maturity": {
+      if (!a.maturityMonth || !a.maturityYear) return false;
+      const jours = Math.round(
+        (echeanceDate(a.maturityMonth, a.maturityYear).getTime() - Date.now()) / (1000 * 60 * 60 * 24)
+      );
+      // On bloque seulement si c'est trop loin dans le futur — une date déjà
+      // passée (jours négatif) reste acceptée, Michel verra ça avec la personne.
+      return jours <= FENETRE_MAX_AVANCE_JOURS;
+    }
     case "currentRate":
       return a.currentRate === null || (typeof a.currentRate === "number" && a.currentRate > 0 && a.currentRate <= 25);
     case "rateType":
@@ -380,14 +387,19 @@ function MaturityStep({ answers, update }: { answers: Answers; update: (patch: P
         />
       </div>
       {jours !== null && (
-        <p className="mt-4 rounded-xl bg-tint px-4 py-3 text-sm text-ink">
+        <p
+          className={`mt-4 rounded-xl px-4 py-3 text-sm ${
+            jours > FENETRE_MAX_AVANCE_JOURS ? "bg-danger/5 text-danger" : "bg-tint text-ink"
+          }`}
+        >
           {jours < 0 ? (
             <>Cette date est déjà passée — ton terme est probablement déjà échu ou renouvelé automatiquement, on y verra avec Michel.</>
-          ) : jours > TROP_LOIN_JOURS ? (
+          ) : jours > FENETRE_MAX_AVANCE_JOURS ? (
             <>
-              Ton échéance arrive dans <strong>{jours} jours</strong> — c&apos;est encore trop loin pour qu&apos;on puisse te
-              conseiller avec précision dès maintenant (les taux et les pénalités peuvent beaucoup changer d&apos;ici là). On
-              va simplement garder ton dossier ouvert et Michel te recontactera au bon moment.
+              Ton échéance arrive dans <strong>{jours} jours</strong> (plus de 6 mois) — ce n&apos;est pas encore le moment,
+              ça ne vaut pas la peine de continuer maintenant : les taux et les pénalités d&apos;aujourd&apos;hui ne
+              voudront plus rien dire d&apos;ici là. Reviens compléter ce formulaire quand il restera 6 mois ou moins avant
+              ton échéance — Michel pourra alors te donner un vrai plan.
             </>
           ) : (
             <>
@@ -399,12 +411,6 @@ function MaturityStep({ answers, update }: { answers: Answers; update: (patch: P
     </div>
   );
 }
-
-// Au-delà d'un an, un conseil précis (pénalité, comparaison au marché)
-// n'a plus vraiment de sens — les taux affichés aujourd'hui ne reflètent
-// rien d'utile pour une échéance aussi loin. Aligné sur le seuil
-// A_SURVEILLER du moteur de décision (voir lib/decision.ts).
-const TROP_LOIN_JOURS = 365;
 
 function CurrentRateStep({
   answers,

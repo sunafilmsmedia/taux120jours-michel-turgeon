@@ -3,6 +3,7 @@ import { randomUUID } from "crypto";
 import { renewalInputSchema } from "@/lib/validation";
 import { processLead } from "@/lib/engine";
 import { buildCrmPayload, sendToCrm } from "@/lib/crm";
+import { echeanceDate, FENETRE_MAX_AVANCE_JOURS } from "@/lib/decision";
 
 export async function POST(request: Request) {
   let body: unknown;
@@ -28,6 +29,24 @@ export async function POST(request: Request) {
   }
 
   const input = parsed.data;
+
+  // Garde-fou serveur : trop loin d'avance, on n'envoie pas le lead à Michel,
+  // peu importe comment la requête a été construite (même si le formulaire
+  // bloque déjà ce cas côté client).
+  const jours = Math.round(
+    (echeanceDate(input.maturityMonth, input.maturityYear).getTime() - Date.now()) / (1000 * 60 * 60 * 24)
+  );
+  if (jours > FENETRE_MAX_AVANCE_JOURS) {
+    return NextResponse.json(
+      {
+        success: false,
+        error:
+          "Ton échéance est encore trop loin (plus de 6 mois) — ça ne vaut pas la peine de continuer pour l'instant. Reviens quand il restera 6 mois ou moins avant ton échéance.",
+      },
+      { status: 422 }
+    );
+  }
+
   const leadId = randomUUID();
 
   try {
