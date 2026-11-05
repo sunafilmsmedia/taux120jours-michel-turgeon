@@ -7,7 +7,7 @@ import ProgressBar from "@/components/ui/ProgressBar";
 import ScoreGauge from "@/components/ui/ScoreGauge";
 import LoadingAI from "./LoadingAI";
 import { LENDER_OPTIONS, MONTH_OPTIONS, RATE_TYPE_OPTIONS, YEAR_OPTIONS, type ChoiceOption } from "./fields";
-import { echeanceDate, FENETRE_MAX_AVANCE_JOURS } from "@/lib/decision";
+import { echeanceDate, FENETRE_BLOCAGE_JOURS } from "@/lib/decision";
 import { computeLivePreview } from "@/lib/livePreview";
 import { formatCurrency } from "@/lib/format";
 import { trackPixel } from "@/lib/pixel";
@@ -185,7 +185,7 @@ function validateStep(step: StepKey, a: Answers): boolean {
       );
       // On bloque seulement si c'est trop loin dans le futur — une date déjà
       // passée (jours négatif) reste acceptée, Michel verra ça avec la personne.
-      return jours <= FENETRE_MAX_AVANCE_JOURS;
+      return jours <= FENETRE_BLOCAGE_JOURS;
     }
     case "currentRate":
       return a.currentRate === null || (typeof a.currentRate === "number" && a.currentRate > 0 && a.currentRate <= 25);
@@ -389,17 +389,16 @@ function MaturityStep({ answers, update }: { answers: Answers; update: (patch: P
       {jours !== null && (
         <p
           className={`mt-4 rounded-xl px-4 py-3 text-sm ${
-            jours > FENETRE_MAX_AVANCE_JOURS ? "bg-danger/5 text-danger" : "bg-tint text-ink"
+            jours > FENETRE_BLOCAGE_JOURS ? "bg-danger/5 text-danger" : "bg-tint text-ink"
           }`}
         >
           {jours < 0 ? (
             <>Cette date est déjà passée — ton terme est probablement déjà échu ou renouvelé automatiquement, on y verra avec Michel.</>
-          ) : jours > FENETRE_MAX_AVANCE_JOURS ? (
+          ) : jours > FENETRE_BLOCAGE_JOURS ? (
             <>
-              Ton échéance arrive dans <strong>{jours} jours</strong> (plus de 6 mois) — ce n&apos;est pas encore le moment,
-              ça ne vaut pas la peine de continuer maintenant : les taux et les pénalités d&apos;aujourd&apos;hui ne
-              voudront plus rien dire d&apos;ici là. Reviens compléter ce formulaire quand il restera 6 mois ou moins avant
-              ton échéance — Michel pourra alors te donner un vrai plan.
+              Ton échéance arrive dans <strong>{jours} jours</strong> — on ne peut rien faire pour toi dans plus de 120
+              jours avant ton échéance, ça ne vaut pas la peine de continuer maintenant. Reviens compléter ce formulaire
+              quand il restera 120 jours ou moins — Michel pourra alors bloquer ton taux.
             </>
           ) : (
             <>

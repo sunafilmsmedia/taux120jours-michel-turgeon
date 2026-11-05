@@ -15,14 +15,6 @@ export const SEUIL_GAIN_MINIMUM = 1000; // en bas de ça, briser ne vaut pas la 
 
 const JOURS_PAR_MOIS = 30.44;
 
-/**
- * Au-delà de 6 mois avant l'échéance, on ne laisse pas la personne
- * compléter le formulaire : l'estimation n'aurait pas de sens (taux et
- * pénalités auront changé) et ça ne vaut pas la peine d'envoyer le lead
- * à Michel ce loin d'avance.
- */
-export const FENETRE_MAX_AVANCE_JOURS = Math.round(6 * JOURS_PAR_MOIS);
-
 function isoDate(d: Date): string {
   return d.toISOString().slice(0, 10);
 }
