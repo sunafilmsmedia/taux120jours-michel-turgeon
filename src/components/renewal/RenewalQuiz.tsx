@@ -396,9 +396,10 @@ function MaturityStep({ answers, update }: { answers: Answers; update: (patch: P
             <>Cette date est déjà passée — ton terme est probablement déjà échu ou renouvelé automatiquement, on y verra avec Michel.</>
           ) : jours > FENETRE_BLOCAGE_JOURS ? (
             <>
-              Ton échéance arrive dans <strong>{jours} jours</strong> — on ne peut rien faire pour toi dans plus de 120
-              jours avant ton échéance, ça ne vaut pas la peine de continuer maintenant. Reviens compléter ce formulaire
-              quand il restera 120 jours ou moins — Michel pourra alors bloquer ton taux.
+              Ton échéance arrive dans <strong>{jours} jours</strong> — à plus de 120 jours de ton échéance, briser ton
+              terme actuel coûterait cher en pénalité, donc ça ne vaut pas la peine de continuer maintenant. Reviens
+              compléter ce formulaire quand il restera 120 jours ou moins — Michel pourra alors bloquer ton taux sans
+              pénalité.
             </>
           ) : (
             <>

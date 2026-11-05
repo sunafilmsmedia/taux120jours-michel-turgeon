@@ -41,7 +41,7 @@ export async function POST(request: Request) {
       {
         success: false,
         error:
-          "On ne peut rien faire pour toi dans plus de 120 jours avant ton échéance — ça ne vaut pas la peine de continuer pour l'instant. Reviens quand il restera 120 jours ou moins.",
+          "À plus de 120 jours de ton échéance, briser ton terme actuel coûterait cher en pénalité — ça ne vaut pas la peine de continuer pour l'instant. Reviens quand il restera 120 jours ou moins.",
       },
       { status: 422 }
     );
